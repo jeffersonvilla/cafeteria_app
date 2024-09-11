@@ -9,19 +9,42 @@ class _PedidoScreenState extends State<PedidoScreen> {
   String? _selectedBebida;
   int _selectedCantidad = 1;
   List<Map<String, dynamic>> pedidos = [];
-  List<String> bebidas = ['Café', 'Té', 'Chocolate'];
+  List<String> bebidas = ['Café Americano', 'Café Latte', 'Capuchino', 'Té Verde', 'Pastel de Chocolate'];
 
   void _agregarPedido() {
     if (_selectedBebida != null) {
       setState(() {
-        pedidos.add({
-          'bebida': _selectedBebida,
-          'cantidad': _selectedCantidad,
-        });
+        // Busca si el pedido ya existe
+        int index = pedidos.indexWhere((pedido) => pedido['bebida'] == _selectedBebida);
+
+        if (index != -1) {
+          // Si ya existe, actualiza la cantidad
+          pedidos[index]['cantidad'] += _selectedCantidad;
+        } else {
+          // Si no existe, agrega el nuevo pedido
+          pedidos.add({
+            'bebida': _selectedBebida,
+            'cantidad': _selectedCantidad,
+          });
+        }
+
+        // Reinicia los campos
         _selectedBebida = null;
         _selectedCantidad = 1;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pedido actualizado')),
+      );
     }
+  }
+
+  void _eliminarPedido(int index) {
+    setState(() {
+      pedidos.removeAt(index);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Pedido eliminado')),
+    );
   }
 
   void _realizarPedido() {
@@ -92,7 +115,9 @@ class _PedidoScreenState extends State<PedidoScreen> {
                     ),
                     SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: _agregarPedido,
+                      onPressed: _selectedBebida == null
+                          ? null
+                          : _agregarPedido,
                       child: Text('Agregar al Pedido'),
                     ),
                   ],
@@ -112,12 +137,16 @@ class _PedidoScreenState extends State<PedidoScreen> {
               itemBuilder: (context, index) {
                 return ListTile(
                   title: Text('${pedidos[index]['cantidad']} x ${pedidos[index]['bebida']}'),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _eliminarPedido(index),
+                  ),
                 );
               },
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _realizarPedido,
+              onPressed: pedidos.isEmpty ? null : _realizarPedido,
               child: Text('Realizar Pedido'),
             ),
           ],
